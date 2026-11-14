@@ -1,0 +1,61 @@
+@page "/logistics"
+@inject SupplyChainIntelligencePlatform.Data.SupplyChainDbContext Db
+
+<PageTitle>Logistics | ChainSight</PageTitle>
+
+<div class="heading">
+    <div>
+        <small>LOGISTICS CONTROL</small>
+        <h1>Shipment monitoring</h1>
+        <p>Inbound component status and disruption impact.</p>
+    </div>
+</div>
+
+@if (items is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <section class="panel">
+        <table>
+            <thead>
+                <tr>
+                    <th>Shipment / component</th>
+                    <th>Supplier</th>
+                    <th>Route</th>
+                    <th>Expected arrival</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var shipment in items)
+                {
+                    <tr>
+                        <td>
+                            <b>@shipment.TrackingNumber</b>
+                            <small>@shipment.ComponentName · @shipment.ComponentCode</small>
+                        </td>
+                        <td>@shipment.Supplier?.Name</td>
+                        <td>@shipment.Origin → @shipment.Destination</td>
+                        <td>@shipment.ExpectedArrival.ToString("dd MMM yyyy")</td>
+                        <td><span class="status">@shipment.Status</span></td>
+                        <td><a href="@($"/impact/{shipment.Id}")">Impact →</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
+@code {
+    private List<Shipment>? items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = await Db.Shipments
+            .Include(shipment => shipment.Supplier)
+            .ToListAsync();
+    }
+}

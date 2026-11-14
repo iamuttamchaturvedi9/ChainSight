@@ -1,0 +1,83 @@
+@page "/financials"
+@inject SupplyChainIntelligencePlatform.Data.SupplyChainDbContext Db
+
+<PageTitle>Financial exposure | ChainSight</PageTitle>
+
+<div class="heading">
+    <div>
+        <small>FINANCIAL INTELLIGENCE</small>
+        <h1>Financial exposure</h1>
+        <p>Link logistics disruption to production-order value and recovery cost.</p>
+    </div>
+</div>
+
+@if (orders is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <div class="metrics">
+        <div>
+            <label>Revenue at risk</label>
+            <strong>@orders.Sum(order => order.RevenueAtRisk).ToString("C0")</strong>
+        </div>
+        <div>
+            <label>Impacted orders</label>
+            <strong>@orders.Count</strong>
+        </div>
+        <div>
+            <label>Potential recovery cost</label>
+            <strong>@recovery.ToString("C0")</strong>
+        </div>
+        <div>
+            <label>Exposure less recovery cost</label>
+            <strong>@Math.Max(0, orders.Sum(order => order.RevenueAtRisk) - recovery).ToString("C0")</strong>
+        </div>
+    </div>
+
+    <section class="panel">
+        <h2>Production orders linked to disruption</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Product</th>
+                    <th>Planned start</th>
+                    <th>Units</th>
+                    <th>Revenue value at risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in orders)
+                {
+                    <tr>
+                        <td>@order.OrderNumber</td>
+                        <td>@order.ProductName</td>
+                        <td>@order.PlannedStart.ToString("dd MMM yyyy")</td>
+                        <td>@order.UnitsPlanned</td>
+                        <td>@order.RevenueAtRisk.ToString("C0")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <p class="muted">
+        Synthetic demo data. Revenue at risk is not recognized loss, profit, cash flow or financial advice.
+    </p>
+}
+
+@code {
+    private List<ProductionOrder>? orders;
+    private decimal recovery;
+
+    protected override async Task OnInitializedAsync()
+    {
+        orders = await Db.ProductionOrders
+            .Where(order => Db.Shipments.Any(shipment =>
+                shipment.Id == order.ShipmentId && shipment.Status == "Delayed"))
+            .ToListAsync();
+        recovery = orders.Count > 0 ? 6400m : 0m;
+    }
+}

@@ -1,0 +1,1 @@
+Azure deployment target: Azure Container Apps + Azure Database for PostgreSQL Flexible Server + Azure Container Registry + Key Vault + Microsoft Entra ID + Application Insights. Configure managed identity, private networking, TLS, database migrations, secret references, and authorization before production. The included Dockerfile is the container build starting point.

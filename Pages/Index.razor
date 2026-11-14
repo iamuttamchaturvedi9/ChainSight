@@ -1,0 +1,100 @@
+@page "/"
+@inject SupplyChainAnalyticsService Analytics
+
+<PageTitle>Overview | ChainSight</PageTitle>
+
+<div class="heading">
+    <div>
+        <small>MONDAY OPERATIONS BRIEF</small>
+        <h1>Supply chain overview</h1>
+        <p>Disruption signals, production exposure and financial impact in one place.</p>
+    </div>
+    <span class="tag">● DEMO DATA</span>
+</div>
+
+@if (data is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <div class="metrics">
+        <div>
+            <label>Active shipments</label>
+            <strong>@data.ActiveShipments</strong>
+            <small>Monitored inbound lanes</small>
+        </div>
+        <div class="warn">
+            <label>Delayed shipments</label>
+            <strong>@data.DelayedShipments</strong>
+            <small>Require operational review</small>
+        </div>
+        <div>
+            <label>Production orders at risk</label>
+            <strong>@data.AtRiskOrders</strong>
+            <small>Linked to delayed components</small>
+        </div>
+        <div>
+            <label>Revenue exposure</label>
+            <strong>@data.RevenueAtRisk.ToString("C0")</strong>
+            <small>Illustrative order value at risk</small>
+        </div>
+    </div>
+
+    <div class="columns">
+        <section class="panel">
+            <div class="panelhead">
+                <h2>Priority disruption</h2>
+                <span class="status">DELAYED</span>
+            </div>
+            <p class="route">Shenzhen, CN　 ━━━━━━━━━━━　 Munich, DE</p>
+            <h3>Servo motor assembly <small>MTR-440</small></h3>
+            <div class="facts">
+                <div>
+                    <small>Tracking</small>
+                    <b>DHL-7842-991</b>
+                </div>
+                <div>
+                    <small>Revised arrival</small>
+                    <b>+5 days</b>
+                </div>
+                <div>
+                    <small>Available stock</small>
+                    <b>36 / 60 safety</b>
+                </div>
+            </div>
+            <a href="/logistics">Review logistics impact →</a>
+        </section>
+
+        <section class="panel">
+            <h2>Financial exposure</h2>
+            <p class="big">@data.RevenueAtRisk.ToString("C0")</p>
+            <p class="muted">
+                Value associated with impacted production orders. Not a forecast of recognized loss.
+            </p>
+            <div class="facts">
+                <div>
+                    <small>Inventory value</small>
+                    <b>@data.InventoryValue.ToString("C0")</b>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <section class="panel workflow">
+        <small>DECISION WORKFLOW</small>
+        <h2>From disruption to controlled action</h2>
+        <div class="steps">
+            <b>1 Detect</b> → <b>2 Assess</b> → <b>3 Quantify</b> → <b>4 Human approval</b>
+        </div>
+    </section>
+}
+
+@code {
+    private DashboardDto? data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        data = await Analytics.Dashboard();
+    }
+}

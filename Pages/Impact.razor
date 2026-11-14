@@ -1,0 +1,100 @@
+@page "/impact/{Id:int}"
+@inject SupplyChainAnalyticsService Analytics
+@inject SupplyChainIntelligencePlatform.Data.SupplyChainDbContext Db
+
+<PageTitle>Impact assessment | ChainSight</PageTitle>
+
+<div class="heading">
+    <div>
+        <small>LOGISTICS / FINANCIAL IMPACT</small>
+        <h1>Shipment impact assessment</h1>
+        <p>Operational and financial consequences for the delayed component.</p>
+    </div>
+    <a href="/logistics">← All shipments</a>
+</div>
+
+@if (x is null)
+{
+    <p>Loading…</p>
+}
+else
+{
+    <div class="metrics">
+        <div>
+            <label>Delay duration</label>
+            <strong>@x.DelayDays days</strong>
+        </div>
+        <div class="warn">
+            <label>Stock shortage to safety level</label>
+            <strong>@x.Shortage units</strong>
+            <small>@x.AvailableStock available / @x.SafetyStock safety</small>
+        </div>
+        <div>
+            <label>Affected orders</label>
+            <strong>@x.AffectedOrders</strong>
+        </div>
+        <div>
+            <label>Revenue exposure</label>
+            <strong>@x.RevenueAtRisk.ToString("C0")</strong>
+        </div>
+    </div>
+
+    <div class="columns">
+        <section class="panel">
+            <small>RECOMMENDED RESPONSE</small>
+            <h2>Expedite a partial shipment</h2>
+            <p>@x.Recommendation</p>
+            <div class="facts">
+                <div>
+                    <small>Estimated expedite cost</small>
+                    <b>@x.ExpediteCost.ToString("C0")</b>
+                </div>
+                <div>
+                    <small>Potential avoided exposure</small>
+                    <b>@x.PotentialAvoidedExposure.ToString("C0")</b>
+                </div>
+            </div>
+            <p class="muted">
+                Illustrative model estimates. Validate freight quotes, supplier capacity, contractual terms and production constraints.
+            </p>
+        </section>
+
+        <section class="panel">
+            <small>DECISION CONTROL</small>
+            <h2>Human approval required</h2>
+            <p>The demo records approval only. It does not place orders or change schedules.</p>
+            <button @onclick="Approve">Approve recommendation</button>
+            <p>@message</p>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ImpactDto? x;
+    private string? message;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        x = await Analytics.Impact(Id);
+    }
+
+    private async Task Approve()
+    {
+        var recommendation = await Db.Recommendations
+            .FirstOrDefaultAsync(recommendation =>
+                recommendation.ShipmentId == Id && recommendation.Status == "Pending");
+
+        if (recommendation is null)
+        {
+            message = "No pending recommendation.";
+            return;
+        }
+
+        recommendation.Status = "Approved";
+        await Db.SaveChangesAsync();
+        message = "Approved in demo workflow. No external action executed.";
+    }
+}
