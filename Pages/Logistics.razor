@@ -1,5 +1,7 @@
+
 @page "/logistics"
-@inject SupplyChainIntelligencePlatform.Data.SupplyChainDbContext Db
+
+@inject ShipmentService ShipmentService
 
 <PageTitle>Logistics | ChainSight</PageTitle>
 
@@ -13,7 +15,11 @@
 
 @if (items is null)
 {
-    <p>Loading…</p>
+    <p>Loading shipments...</p>
+}
+else if (items.Count == 0)
+{
+    <p>No shipments found.</p>
 }
 else
 {
@@ -29,19 +35,40 @@ else
                     <th></th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach (var shipment in items)
                 {
                     <tr>
                         <td>
                             <b>@shipment.TrackingNumber</b>
-                            <small>@shipment.ComponentName · @shipment.ComponentCode</small>
+                            <small>
+                                @shipment.ComponentName ·
+                                @shipment.ComponentCode
+                            </small>
                         </td>
-                        <td>@shipment.Supplier?.Name</td>
-                        <td>@shipment.Origin → @shipment.Destination</td>
-                        <td>@shipment.ExpectedArrival.ToString("dd MMM yyyy")</td>
-                        <td><span class="status">@shipment.Status</span></td>
-                        <td><a href="@($"/impact/{shipment.Id}")">Impact →</a></td>
+
+                        <td>@shipment.SupplierName</td>
+
+                        <td>
+                            @shipment.Origin → @shipment.Destination
+                        </td>
+
+                        <td>
+                            @shipment.ExpectedArrival.ToString("dd MMM yyyy")
+                        </td>
+
+                        <td>
+                            <span class="status">
+                                @shipment.Status
+                            </span>
+                        </td>
+
+                        <td>
+                            <a href="@($"/impact/{shipment.Id}")">
+                                Impact →
+                            </a>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -50,12 +77,10 @@ else
 }
 
 @code {
-    private List<Shipment>? items;
+    private List<ShipmentListItemDto>? items;
 
     protected override async Task OnInitializedAsync()
     {
-        items = await Db.Shipments
-            .Include(shipment => shipment.Supplier)
-            .ToListAsync();
+        items = await ShipmentService.GetShipmentsAsync();
     }
 }

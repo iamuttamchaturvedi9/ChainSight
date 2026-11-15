@@ -1,6 +1,7 @@
 @page "/impact/{Id:int}"
 @inject SupplyChainAnalyticsService Analytics
 @inject SupplyChainIntelligencePlatform.Data.SupplyChainDbContext Db
+@inject ShipmentService ShipmentService
 
 <PageTitle>Impact assessment | ChainSight</PageTitle>
 
@@ -70,8 +71,7 @@ else
 }
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
     private ImpactDto? x;
     private string? message;
@@ -83,18 +83,11 @@ else
 
     private async Task Approve()
     {
-        var recommendation = await Db.Recommendations
-            .FirstOrDefaultAsync(recommendation =>
-                recommendation.ShipmentId == Id && recommendation.Status == "Pending");
+        var result =
+            await ShipmentService.ApproveRecommendationAsync(Id);
 
-        if (recommendation is null)
-        {
-            message = "No pending recommendation.";
-            return;
-        }
-
-        recommendation.Status = "Approved";
-        await Db.SaveChangesAsync();
-        message = "Approved in demo workflow. No external action executed.";
+        message = result.Message;
     }
+
+
 }

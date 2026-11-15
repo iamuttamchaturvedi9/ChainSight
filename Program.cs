@@ -20,7 +20,7 @@ builder.Services.AddDbContext<SupplyChainDbContext>(options =>
     }
 });
 builder.Services.AddScoped<SupplyChainAnalyticsService>();
-
+builder.Services.AddScoped<ShipmentService>();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
