@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using SupplyChainIntelligencePlatform.Data;
 using SupplyChainIntelligencePlatform.Models;
 using SupplyChainIntelligencePlatform.Services;
+using ModelContextProtocol.AspNetCore;
+using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
@@ -20,6 +22,13 @@ builder.Services.AddDbContext<SupplyChainDbContext>(options =>
     }
 });
 builder.Services.AddScoped<SupplyChainAnalyticsService>();
+builder.Services.AddMcpServer()
+    .WithHttpTransport(options =>
+    {
+        options.SessionMode = HttpServerSessionMode.Stateless;
+    })
+    .WithTools<ShipmentTools>();
+
 builder.Services.AddScoped<ShipmentService>();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
@@ -30,6 +39,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -49,6 +60,9 @@ app.MapGet("/api/shipments/{id:int}/impact", async (int id, SupplyChainAnalytics
     return result is null ? Results.NotFound() : Results.Ok(result);
 });
 
+
+
+app.MapMcp("/mcp");
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 app.Run();
